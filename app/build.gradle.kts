@@ -4,6 +4,9 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val projectStripeVersionCode = providers.gradleProperty("projectStripeVersionCode").map { it.toInt() }.orElse(2)
+val projectStripeVersionName = providers.gradleProperty("projectStripeVersionName").orElse("0.2.0")
+
 android {
     namespace = "com.projectstripe.manager"
     compileSdk = 34
@@ -12,8 +15,8 @@ android {
         applicationId = "com.projectstripe.manager"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = projectStripeVersionCode.get()
+        versionName = projectStripeVersionName.get()
     }
 
     buildTypes {
@@ -24,6 +27,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     compileOptions {
