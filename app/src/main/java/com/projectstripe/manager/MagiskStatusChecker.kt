@@ -82,23 +82,20 @@ data class CommandResult(
 )
 
 sealed class StatusValue {
-    data class Present(val detail: String) : StatusValue()
-    data class Missing(val reason: String) : StatusValue()
-    data class Unknown(val reason: String) : StatusValue()
+    abstract val label: String
+    abstract val detail: String
 
-    val label: String
-        get() =
-            when (this) {
-                is Present -> "Present"
-                is Missing -> "Missing"
-                is Unknown -> "Unknown"
-            }
+    data class Present(override val detail: String) : StatusValue() {
+        override val label: String = "Present"
+    }
 
-    val detail: String
-        get() =
-            when (this) {
-                is Present -> detail
-                is Missing -> reason
-                is Unknown -> reason
-            }
+    data class Missing(private val reason: String) : StatusValue() {
+        override val label: String = "Missing"
+        override val detail: String = reason
+    }
+
+    data class Unknown(private val reason: String) : StatusValue() {
+        override val label: String = "Unknown"
+        override val detail: String = reason
+    }
 }
