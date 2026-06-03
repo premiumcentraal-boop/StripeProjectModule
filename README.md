@@ -14,6 +14,14 @@ It uses the local Vector framework tree as reference context, but does not rebui
 
 `com.projectstripe.manager`
 
+## Latest APK
+
+After the GitHub workflow succeeds, the stable download URL is:
+
+```text
+https://github.com/premiumcentraal-boop/StripeProjectModule/releases/download/project-stripe-latest/project-stripe-debug.apk
+```
+
 ## Build Locally
 
 Requires a local JDK 17, Android SDK, and Gradle 8.7:
@@ -30,7 +38,7 @@ app/build/outputs/apk/debug/app-debug.apk
 
 ## Build In GitHub
 
-Push this project to a GitHub repository, then run:
+Run:
 
 ```text
 Actions -> Build Project Stripe APK -> Run workflow
@@ -41,6 +49,8 @@ The workflow uploads:
 ```text
 project-stripe-debug-apk
 ```
+
+It also publishes the latest APK to the `project-stripe-latest` prerelease.
 
 ## Safety
 
