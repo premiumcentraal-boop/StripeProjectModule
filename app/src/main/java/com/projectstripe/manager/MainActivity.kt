@@ -256,6 +256,7 @@ private fun SettingsScreen(padding: PaddingValues, status: ProjectStripeStatus) 
             Text("Settings", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             Text("Read-only safety boundaries", color = Color(0xFF475569))
         }
+        item { InfoCard("App version", "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})") }
         item { InfoCard("Package", ProjectStripeConfig.PACKAGE_NAME) }
         item { InfoCard("Vector framework", ProjectStripeConfig.VECTOR_REFERENCE_NAME) }
         item { InfoCard("Module root", ProjectStripeConfig.MODULE_ROOT) }
