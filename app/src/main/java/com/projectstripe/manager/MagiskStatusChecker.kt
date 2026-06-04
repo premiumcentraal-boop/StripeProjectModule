@@ -45,14 +45,18 @@ class MagiskStatusChecker {
             )
         }
 
-    suspend fun runRootCommand(command: String): CommandResult = runCommand("su", "-c", command)
+    suspend fun runRootCommand(command: String, timeoutSeconds: Long = 5): CommandResult =
+        runCommandWithTimeout(timeoutSeconds, "su", "-c", command)
 
     suspend fun runCommand(vararg command: String): CommandResult =
+        runCommandWithTimeout(5, *command)
+
+    private suspend fun runCommandWithTimeout(timeoutSeconds: Long, vararg command: String): CommandResult =
         withContext(Dispatchers.IO) {
             val display = command.joinToString(" ")
             try {
                 val process = ProcessBuilder(*command).redirectErrorStream(true).start()
-                val finished = process.waitFor(5, TimeUnit.SECONDS)
+                val finished = process.waitFor(timeoutSeconds, TimeUnit.SECONDS)
                 if (!finished) {
                     process.destroyForcibly()
                     return@withContext CommandResult(display, false, "", "Timed out")
@@ -82,20 +86,23 @@ data class CommandResult(
 )
 
 sealed class StatusValue {
-    abstract val label: String
-    abstract val detail: String
+    data class Present(val message: String) : StatusValue()
+    data class Missing(val reason: String) : StatusValue()
+    data class Unknown(val reason: String) : StatusValue()
 
-    data class Present(override val detail: String) : StatusValue() {
-        override val label: String = "Present"
-    }
+    val label: String
+        get() =
+            when (this) {
+                is Present -> "Present"
+                is Missing -> "Missing"
+                is Unknown -> "Unknown"
+            }
 
-    data class Missing(private val reason: String) : StatusValue() {
-        override val label: String = "Missing"
-        override val detail: String = reason
-    }
-
-    data class Unknown(private val reason: String) : StatusValue() {
-        override val label: String = "Unknown"
-        override val detail: String = reason
-    }
+    val detail: String
+        get() =
+            when (this) {
+                is Present -> message
+                is Missing -> reason
+                is Unknown -> reason
+            }
 }
