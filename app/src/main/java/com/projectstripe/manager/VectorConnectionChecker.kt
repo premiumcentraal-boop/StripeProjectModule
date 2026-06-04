@@ -9,6 +9,7 @@ import kotlinx.coroutines.withContext
 class VectorConnectionChecker(
     private val context: Context,
     private val magiskStatusChecker: MagiskStatusChecker = MagiskStatusChecker(),
+    private val vectorNativeBridge: VectorNativeBridge = VectorNativeBridge(magiskStatusChecker),
 ) {
     suspend fun check(): ProjectStripeStatus =
         withContext(Dispatchers.IO) {
@@ -19,16 +20,19 @@ class VectorConnectionChecker(
             ProjectStripeLogger.log("Zygisk status: ${magisk.zygisk.label}.")
 
             val moduleCheck = checkModuleFolders(magisk.root)
+            val nativeStatus = vectorNativeBridge.inspect(magisk.root)
             val managers = findManagerPackages()
-            val nextStep = resolveNextStep(magisk, moduleCheck)
+            val nextStep = resolveNextStep(magisk, moduleCheck, nativeStatus)
 
             ProjectStripeLogger.log("Vector module status: ${moduleCheck.status.label}.")
+            ProjectStripeLogger.log("Vector native connection: ${nativeStatus.connection.label}.")
             ProjectStripeLogger.log("Installed manager package matches: ${managers.ifEmpty { listOf("none") }.joinToString()}.")
             ProjectStripeLogger.log("Next setup step: $nextStep")
 
             ProjectStripeStatus(
                 magiskStatus = magisk,
                 moduleCheck = moduleCheck,
+                nativeStatus = nativeStatus,
                 managerPackages = managers,
                 nextStep = nextStep,
             )
@@ -81,12 +85,19 @@ class VectorConnectionChecker(
         }
     }
 
-    private fun resolveNextStep(magisk: MagiskStatus, moduleCheck: VectorModuleCheck): String {
+    private fun resolveNextStep(
+        magisk: MagiskStatus,
+        moduleCheck: VectorModuleCheck,
+        nativeStatus: VectorNativeSnapshot,
+    ): String {
         return when {
             magisk.root is StatusValue.Missing -> "Root is required."
             magisk.magiskVersion is StatusValue.Missing -> "Install Magisk first."
             magisk.zygisk is StatusValue.Missing -> "Enable Zygisk in Magisk and reboot."
             moduleCheck.status is StatusValue.Missing -> "Install Vector as a Magisk Zygisk module."
+            nativeStatus.paths.cli is StatusValue.Missing -> "Vector module found. Reboot, then confirm Vector CLI is deployed."
+            nativeStatus.paths.socket is StatusValue.Missing -> "Vector CLI found. Start/reboot until the Vector daemon socket is available."
+            nativeStatus.connection is StatusValue.Present -> "Vector connected."
             moduleCheck.status is StatusValue.Present -> "Vector connected."
             else -> "Review setup status."
         }
@@ -96,6 +107,7 @@ class VectorConnectionChecker(
 data class ProjectStripeStatus(
     val magiskStatus: MagiskStatus,
     val moduleCheck: VectorModuleCheck,
+    val nativeStatus: VectorNativeSnapshot,
     val managerPackages: List<String>,
     val nextStep: String,
 ) {
@@ -112,6 +124,7 @@ data class ProjectStripeStatus(
                         commandResults = emptyList(),
                     ),
                 moduleCheck = VectorModuleCheck(StatusValue.Unknown("Not checked yet."), emptyList()),
+                nativeStatus = VectorNativeSnapshot.initial(),
                 managerPackages = emptyList(),
                 nextStep = "Run setup checks.",
             )
