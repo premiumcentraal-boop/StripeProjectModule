@@ -4,8 +4,8 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
-val projectStripeVersionCode = providers.gradleProperty("projectStripeVersionCode").map { it.toInt() }.orElse(2)
-val projectStripeVersionName = providers.gradleProperty("projectStripeVersionName").orElse("0.2.0")
+val projectStripeVersionCode = providers.gradleProperty("projectStripeVersionCode").map { it.toInt() }.orElse(3)
+val projectStripeVersionName = providers.gradleProperty("projectStripeVersionName").orElse("0.3.0")
 
 android {
     namespace = "com.projectstripe.manager"
